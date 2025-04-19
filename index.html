@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" href="https://openweathermap.org/img/wn/01d.png" />
+  <title>True Weather App</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="weather-container">
+    <h1>Weather App</h1>
+
+    <div class="controls-group">
+      <div class="controls">
+        <input type="text" id="cityInput" placeholder="Enter city..." />
+        <button id="searchBtn">Get Weather</button>
+        <button id="geoBtn">Use My Location</button>
+      </div>
+      <div class="unit-toggle">
+        <input type="checkbox" id="unitToggle" />
+        <label for="unitToggle">Show in Fahrenheit</label>
+      </div>
+    </div>
+
+    <div class="weather-info" id="weatherInfo"></div>
+    <div id="forecast" class="forecast-grid"></div>
+  </div>
+
+  <!-- JS at bottom to ensure elements exist first -->
+  <script>
+    const apiKey = '97c67cbde1eb26ac19cac0a50c246f6f';
+
+    window.onload = () => {
+      document.getElementById('searchBtn').addEventListener('click', getWeather);
+      document.getElementById('geoBtn').addEventListener('click', getLocationWeather);
+      document.getElementById('unitToggle').addEventListener('change', getWeather);
+      document.getElementById('cityInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          getWeather();
+        }
+      });
+    };
+
+    async function getWeather(cityOverride = null, coords = null) {
+      const city = cityOverride || document.getElementById('cityInput').value;
+      const useFahrenheit = document.getElementById('unitToggle').checked;
+      const units = useFahrenheit ? 'imperial' : 'metric';
+      const symbol = useFahrenheit ? '°F' : '°C';
+
+      let url = '';
+      if (coords) {
+        url = `https://api.openweathermap.org/data/2.5/weather?lat=${coords.lat}&lon=${coords.lon}&appid=${apiKey}&units=${units}`;
+      } else {
+        url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=${units}`;
+      }
+
+      try {
+        document.getElementById('weatherInfo').innerHTML = '<p>Loading weather data...</p>';
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.cod === 200) {
+          const weatherHtml = `
+            <h2>${data.name}, ${data.sys.country}</h2>
+            <img src="https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png" alt="Weather icon" />
+            <p><strong>${data.weather[0].description}</strong></p>
+            <p>Temperature: ${data.main.temp}${symbol}</p>
+            <p>Humidity: ${data.main.humidity}%</p>
+            <p>Wind: ${data.wind.speed} ${useFahrenheit ? 'mph' : 'm/s'}</p>
+          `;
+          document.getElementById('weatherInfo').innerHTML = weatherHtml;
+          await getForecast(data.name, units);
+        } else {
+          document.getElementById('weatherInfo').innerHTML = `<p style="color:red;">City not found.</p>`;
+          document.getElementById('forecast').innerHTML = '';
+        }
+      } catch (error) {
+        document.getElementById('weatherInfo').innerHTML = `<p>Error fetching weather data.</p>`;
+        console.error(error);
+      }
+    }
+
+    function getLocationWeather() {
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const coords = {
+              lat: position.coords.latitude,
+              lon: position.coords.longitude
+            };
+            getWeather(null, coords);
+          },
+          () => {
+            alert('Location access denied. Please enter a city manually.');
+          }
+        );
+      } else {
+        alert('Geolocation not supported by your browser.');
+      }
+    }
+
+    async function getForecast(city, units = 'metric') {
+      const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${units}`;
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.cod !== "200") {
+        document.getElementById("forecast").innerHTML = "";
+        return;
+      }
+
+      const dailyForecast = {};
+      data.list.forEach(item => {
+        const date = item.dt_txt.split(" ")[0];
+        if (!dailyForecast[date]) dailyForecast[date] = [];
+        dailyForecast[date].push(item);
+      });
+
+      const forecastHTML = Object.keys(dailyForecast)
+        .slice(1, 4)
+        .map(date => {
+          const dayData = dailyForecast[date];
+          const weekday = new Date(date).toLocaleDateString('en-US', { weekday: 'short' });
+
+          const amTemps = dayData.filter(i => i.dt_txt.includes("03:00") || i.dt_txt.includes("06:00") || i.dt_txt.includes("09:00"));
+          const pmTemps = dayData.filter(i => i.dt_txt.includes("12:00") || i.dt_txt.includes("15:00") || i.dt_txt.includes("18:00"));
+
+          const avg = arr => arr.length ? (arr.reduce((sum, i) => sum + i, 0) / arr.length).toFixed(1) : '–';
+
+          const morningAvg = avg(amTemps.map(i => i.main.temp));
+          const afternoonAvg = avg(pmTemps.map(i => i.main.temp));
+          const min = Math.min(...dayData.map(i => i.main.temp_min)).toFixed(1);
+          const max = Math.max(...dayData.map(i => i.main.temp_max)).toFixed(1);
+          const feels = avg(dayData.map(i => i.main.feels_like));
+          const icon = dayData[4]?.weather[0].icon || dayData[0].weather[0].icon;
+          const symbol = units === 'imperial' ? '°F' : '°C';
+
+          return `
+            <div class="forecast-card">
+              <h4>${weekday}</h4>
+              <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="icon" />
+              <p><strong>AM:</strong> ${morningAvg}${symbol}</p>
+              <p><strong>PM:</strong> ${afternoonAvg}${symbol}</p>
+              <p><strong>Feels:</strong> ${feels}${symbol}</p>
+              <p><strong>Min/Max:</strong> ${min}${symbol} / ${max}${symbol}</p>
+            </div>
+          `;
+        }).join("");
+
+      document.getElementById("forecast").innerHTML = `<h3>3-Day Forecast</h3><div class="forecast-row">${forecastHTML}</div>`;
+    }
+  </script>
+</body>
+</html>
+

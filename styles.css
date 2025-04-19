@@ -1,0 +1,151 @@
+/* ========== Base Styles ========== */
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(to right, #74ebd5, #acb6e5);
+  margin: 0;
+  padding: 40px 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.weather-container {
+  background-color: white;
+  padding: 30px;
+  max-width: 550px;
+  width: 100%;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  text-align: center;
+}
+
+/* ========== Heading ========== */
+.weather-container h1 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+/* ========== Controls Group ========== */
+.controls-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+/* ========== Input & Buttons ========== */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+}
+
+input[type="text"] {
+  padding: 10px;
+  flex: 1 1 200px;
+  min-width: 180px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+button {
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  flex-shrink: 0;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+/* ========== Unit Toggle ========== */
+.unit-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+/* ========== Weather Info ========== */
+.weather-info {
+  text-align: center;
+  font-size: 1.1rem;
+  color: #222;
+}
+
+.weather-info img {
+  margin: 10px 0;
+  height: 80px;
+}
+
+/* ========== Forecast Section ========== */
+#forecast h3 {
+  margin-top: 30px;
+  font-size: 1.3rem;
+  color: #222;
+}
+
+.forecast-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.forecast-card {
+  background: #f1f1f1;
+  padding: 12px;
+  border-radius: 12px;
+  flex: 1 1 140px;
+  text-align: center;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.forecast-card img {
+  height: 50px;
+}
+
+.forecast-card p {
+  margin: 4px 0;
+  font-size: 0.95rem;
+}
+
+/* ========== Mobile-Friendly Adjustments ========== */
+@media (max-width: 600px) {
+  body {
+    padding: 20px;
+  }
+
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  input[type="text"],
+  button {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .unit-toggle {
+    flex-direction: row;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .forecast-card {
+    flex: 1 1 100%;
+  }
+}
